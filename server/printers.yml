@@ -1,0 +1,11 @@
+printers:
+  printer0:
+    name: Test printer 1
+    address: localhost
+    port: 7878
+    apiKey: 787058FB66124C29B3C7133E42A1771F
+  printer1:
+    name: Test printer 2
+    address: localhost
+    port: 7879
+    apiKey: A15A5A596A24443CB26ABBCFE8B6607D
