@@ -7,16 +7,20 @@ from lib.utils import loadFromFile, loadConfig
 
 CONFIG = loadConfig('config.yml')
 
-async def fetch(url, session,apiKey,printer):
+JOB_INFO = 'JOB_INFO'
+PRINTER_INFO = 'PRINTER_INFO'
+
+async def fetch(url, session,apiKey,printer,dataType):
     headers = {
         'X-Api-Key': apiKey,
     }
     async with session.get(url,headers=headers) as response:
-        return await response.read(),printer
+        return await response.read(),printer,dataType
 
 async def run():
     print('Get data')
-    url = "http://{address}:{port}/api/job"
+    urlJobs = "http://{address}:{port}/api/job"
+    urlPrinter = "http://{address}:{port}/api/printer"
     tasks = []
     config = loadConfig('printers.yml')
 
@@ -24,15 +28,37 @@ async def run():
         printers = config['printers']
         for key in config['printers']:
             task = asyncio.ensure_future(fetch(
-                url.format(address=printers[key]['address'],port=printers[key]['port']),
-                session,printers[key]['apiKey'],key))
+                urlJobs.format(address=printers[key]['address'],port=printers[key]['port']),
+                session,printers[key]['apiKey'],key,JOB_INFO))
+            tasks.append(task)
+            task = asyncio.ensure_future(fetch(
+                urlPrinter.format(address=printers[key]['address'],port=printers[key]['port']),
+                session,printers[key]['apiKey'],key,PRINTER_INFO))
             tasks.append(task)
 
         responses = await asyncio.gather(*tasks)
 
         data = {}
-        for response in responses:
-            data[response[1]] = json.loads(response[0].decode('utf-8'))
+
+        for key in config['printers']:
+            response_data_printer = {}
+            response_data_job = {}
+            for response in responses:
+                if(response[1]==key):
+                    if(response[2]==PRINTER_INFO):
+                        response_data_printer = json.loads(response[0].decode('utf-8'))
+                    elif(response[2]==JOB_INFO):
+                        response_data_job = json.loads(response[0].decode('utf-8'))
+            data[key] = {
+                'state':response_data_printer['state']['text'],
+                'progress': response_data_job['progress']['completion'],
+                'nozzle-temperature': response_data_printer['temperature']['tool0']['actual'],
+                'bed-temperature': response_data_printer['temperature']['bed']['actual'],
+                'file-name': response_data_job['job']['file']['name'],
+                'time-printing': response_data_job['progress']['printTime'],
+                'time-remaining': response_data_job['progress']['printTimeLeft'],
+            }
+
         data_json = json.dumps(data)
         with open('printer-state.json','w') as file:
             file.write(data_json)
