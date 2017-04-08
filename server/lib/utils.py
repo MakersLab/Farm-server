@@ -8,3 +8,4 @@ def loadFromFile(file_name):
 
 def loadConfig(file_name):
     return yaml.load(loadFromFile(file_name))
+
