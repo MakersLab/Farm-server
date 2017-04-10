@@ -52,14 +52,17 @@ async def run():
             data[key] = {
                 'state':response_data_printer['state']['text'],
                 'progress': response_data_job['progress']['completion'],
-                'nozzle-temperature': response_data_printer['temperature']['tool0']['actual'],
-                'bed-temperature': response_data_printer['temperature']['bed']['actual'],
-                'file-name': response_data_job['job']['file']['name'],
-                'time-printing': response_data_job['progress']['printTime'],
-                'time-remaining': response_data_job['progress']['printTimeLeft'],
+                'nozzleTemperature': response_data_printer['temperature']['tool0']['actual'],
+                'bedTemperature': response_data_printer['temperature']['bed']['actual'],
+                'fileName': response_data_job['job']['file']['name'],
+                'timePrinting': response_data_job['progress']['printTime'],
+                'timeRemaining': response_data_job['progress']['printTimeLeft'],
             }
 
-        data_json = json.dumps(data)
+        data_json = json.dumps({
+            'timestamp': int(time.time()),
+            'printers': data,
+        })
         with open('printer-state.json','w') as file:
             file.write(data_json)
 
@@ -80,8 +83,9 @@ while True:
     if (nextTime > time.time()):
         time.sleep(((nextTime - time.time())))
     elif (nextTime < time.time()):
-        updateInterval += 100
-        print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
+        pass
+        # updateInterval += 100
+        # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
     print(time.time() - (startTime+(i-1)*(updateInterval/1000)))
     getData()
     expectedTime += updateInterval
