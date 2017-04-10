@@ -3,8 +3,9 @@ import asyncio
 import websockets
 import logging
 import time
+import json
 
-from lib.utils import loadFromFile, loadConfig
+from lib.utils import loadFromFile, loadConfig, loadJsonObject
 
 CONFIG = loadConfig('config.yml')
 UPDATE_INTERVAL = CONFIG['websocket']['state-update-interval']
@@ -34,10 +35,14 @@ async def producer():
     print('calling')
     global distributedMessage
     if(shouldUpdateMessage()):
-        distributedMessage = loadFromFile(printerStateFileName)
+        distributedMessage = loadJsonObject(printerStateFileName)
         print('loaded new message')
     await asyncio.sleep(UPDATE_INTERVAL/1000)
-    return distributedMessage
+    return json.dumps({
+        'type':'printer-state',
+        'data': distributedMessage['printers'],
+        'timestamp': distributedMessage['timestamp'],
+    })
 
 async def consumer_handler(websocket):
     while True:
@@ -50,6 +55,7 @@ async def producer_handler(websocket):
         await websocket.send(message)
 
 async def handler(websocket, path):
+    global connected
     connected.add(websocket)
     consumer_task = asyncio.ensure_future(consumer_handler(websocket))
     producer_task = asyncio.ensure_future(producer_handler(websocket))
@@ -61,7 +67,7 @@ async def handler(websocket, path):
     for task in pending:
         task.cancel()
 
-start_server = websockets.serve(handler, 'localhost', 5678)
+start_server = websockets.serve(handler, '0.0.0.0', CONFIG['websocket']['port'])
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
