@@ -5,6 +5,7 @@ def loadFromFile(file_name):
     fileContents = ''
     with open(file_name, 'r') as file:
         fileContents = file.read()
+        file.close()
     return fileContents
 
 def loadConfig(file_name):

@@ -18,7 +18,6 @@ async def fetch(url, session,apiKey,printer,dataType):
         return await response.read(),printer,dataType
 
 async def run():
-    print('Get data')
     urlJobs = "http://{address}:{port}/api/job"
     urlPrinter = "http://{address}:{port}/api/printer"
     tasks = []
@@ -80,14 +79,21 @@ startTime = time.time()
 expectedTime = startTime
 updateInterval = int(CONFIG['printer-state']['update-interval'])
 while True:
-    if (nextTime > time.time()):
-        time.sleep(((nextTime - time.time())))
-    elif (nextTime < time.time()):
-        pass
-        # updateInterval += 100
-        # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
-    print(time.time() - (startTime+(i-1)*(updateInterval/1000)))
-    getData()
-    expectedTime += updateInterval
-    nextTime = startTime + (i*updateInterval)/1000
-    i += 1
+    try:
+        if (nextTime > time.time()):
+            timeToSleep = nextTime - time.time()
+            if(timeToSleep > 15):
+                print('Time to sleep is too big next time {0} time{1} '.format(nextTime,time.time()))
+                timeToSleep = 15
+            time.sleep(((nextTime - time.time())))
+        elif (nextTime < time.time()):
+            pass
+            # updateInterval += 100
+            # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
+        print('{}: Time difference from expected'.format(time.time()),time.time() - (startTime+(i-1)*(updateInterval/1000)))
+        getData()
+        expectedTime += updateInterval
+        nextTime = startTime + (i*updateInterval)/1000
+        i += 1
+    except Exception as e:
+        print(e)
