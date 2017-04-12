@@ -29,14 +29,16 @@ def shouldUpdateMessage():
         return False
 
 async def consumer(message):
-    print('got message')
+    pass
 
 async def producer():
-    print('calling')
     global distributedMessage
     if(shouldUpdateMessage()):
-        distributedMessage = loadJsonObject(printerStateFileName)
-        print('loaded new message')
+        try:
+            distributedMessage = loadJsonObject(printerStateFileName)
+        except Exception as e:
+            time.sleep(1)
+            distributedMessage = loadJsonObject(printerStateFileName)
     await asyncio.sleep(UPDATE_INTERVAL/1000)
     return json.dumps({
         'type':'printer-state',
@@ -56,6 +58,7 @@ async def producer_handler(websocket):
 
 async def handler(websocket, path):
     global connected
+    print('{} new connection from {}'.format(time.time(),websocket.remote_address[0]))
     connected.add(websocket)
     consumer_task = asyncio.ensure_future(consumer_handler(websocket))
     producer_task = asyncio.ensure_future(producer_handler(websocket))
