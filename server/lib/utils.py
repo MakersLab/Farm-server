@@ -17,6 +17,7 @@ def loadJsonObject(file_name):
 def removeUnnecessaryData(config):
     for printer in config['printers']:
         config['printers'][printer] = {
-            'name': config['printers'][printer]['name']
+            'name': config['printers'][printer]['name'],
+            'url': config['printers'][printer]['url'],
         }
     return config
