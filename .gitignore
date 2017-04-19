@@ -1,2 +1,4 @@
 .idea
 *.pyc
+/server/build/
+server/static/
