@@ -3,7 +3,7 @@ from aiohttp import ClientSession
 import json
 import yaml
 import time
-from lib.utils import loadFromFile, loadConfig
+from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary
 
 CONFIG = loadConfig('config.yml')
 
@@ -44,19 +44,26 @@ async def run():
             response_data_job = {}
             for response in responses:
                 if(response[1]==key):
-                    if(response[2]==PRINTER_INFO):
-                        response_data_printer = json.loads(response[0].decode('utf-8'))
-                    elif(response[2]==JOB_INFO):
-                        response_data_job = json.loads(response[0].decode('utf-8'))
-            data[key] = {
-                'state':response_data_printer['state']['text'],
-                'progress': response_data_job['progress']['completion'],
-                'nozzleTemperature': response_data_printer['temperature']['tool0']['actual'],
-                'bedTemperature': response_data_printer['temperature']['bed']['actual'],
-                'fileName': response_data_job['job']['file']['name'],
-                'timePrinting': response_data_job['progress']['printTime'],
-                'timeRemaining': response_data_job['progress']['printTimeLeft'],
-            }
+                    try:
+                        if(response[2]==PRINTER_INFO):
+                                response_data_printer = json.loads(response[0].decode('utf-8'))
+                        elif(response[2]==JOB_INFO):
+                            response_data_job = json.loads(response[0].decode('utf-8'))
+                    except Exception as e:
+                        response_data_printer = 'offline'
+                        response_data_job = 'offline'
+            if(response_data_printer != 'offline'):
+                data[key] = {
+                    'state':response_data_printer['state']['text'],
+                    'progress': response_data_job['progress']['completion'],
+                    'nozzleTemperature': response_data_printer['temperature']['tool0']['actual'],
+                    'bedTemperature': response_data_printer['temperature']['bed']['actual'],
+                    'fileName': response_data_job['job']['file']['name'],
+                    'timePrinting': response_data_job['progress']['printTime'],
+                    'timeRemaining': response_data_job['progress']['printTimeLeft'],
+                }
+            else:
+                data[key] = getOfflinePrinterDictionary()
 
         data_json = json.dumps({
             'timestamp': int(time.time()),
