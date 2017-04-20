@@ -24,11 +24,22 @@ def removeUnnecessaryData(config):
 
 def getOfflinePrinterDictionary():
     return {
-        'state': 'Not working',
+        'state': 'Printer is unreachable',
         'progress': 0,
         'nozzleTemperature': 0,
         'bedTemperature': 0,
-        'fileName': 'x',
+        'fileName': '',
         'timePrinting': 0,
         'timeRemaining': 0,
                 }
+
+def getUnreachablePrinterDictionary():
+    return {
+        'state': 'Octoprint is unreachable',
+        'progress': 0,
+        'nozzleTemperature': 0,
+        'bedTemperature': 0,
+        'fileName': '',
+        'timePrinting': 0,
+        'timeRemaining': 0,
+    }

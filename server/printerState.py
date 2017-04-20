@@ -3,19 +3,27 @@ from aiohttp import ClientSession
 import json
 import yaml
 import time
-from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary
+from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary
 
 CONFIG = loadConfig('config.yml')
 
 JOB_INFO = 'JOB_INFO'
 PRINTER_INFO = 'PRINTER_INFO'
 
+UNREACHABLE = 'UNREACHABLE'
+OFFLINE = 'OFFLINE'
+
 async def fetch(url, session,apiKey,printer,dataType):
     headers = {
         'X-Api-Key': apiKey,
     }
-    async with session.get(url,headers=headers) as response:
-        return await response.read(),printer,dataType
+    try:
+        async with session.get(url,headers=headers, timeout=2) as response:
+            response = await response.read()
+            return response,printer,dataType
+    except Exception as e:
+        return UNREACHABLE,printer,dataType
+
 
 async def run():
     urlJobs = "http://{address}:{port}/api/job"
@@ -45,14 +53,17 @@ async def run():
             for response in responses:
                 if(response[1]==key):
                     try:
-                        if(response[2]==PRINTER_INFO):
+                        if(response[2]==PRINTER_INFO and response[0] != UNREACHABLE):
                                 response_data_printer = json.loads(response[0].decode('utf-8'))
-                        elif(response[2]==JOB_INFO):
+                        elif(response[2]==JOB_INFO and response[0] != UNREACHABLE):
                             response_data_job = json.loads(response[0].decode('utf-8'))
+                        else:
+                            response_data_printer = UNREACHABLE
+                            response_data_job = UNREACHABLE
                     except Exception as e:
-                        response_data_printer = 'offline'
-                        response_data_job = 'offline'
-            if(response_data_printer != 'offline'):
+                        response_data_printer = OFFLINE
+                        response_data_job = OFFLINE
+            if(response_data_printer != OFFLINE and response_data_printer != UNREACHABLE):
                 data[key] = {
                     'state':response_data_printer['state']['text'],
                     'progress': response_data_job['progress']['completion'],
@@ -62,8 +73,10 @@ async def run():
                     'timePrinting': response_data_job['progress']['printTime'],
                     'timeRemaining': response_data_job['progress']['printTimeLeft'],
                 }
-            else:
+            elif(response_data_printer == OFFLINE):
                 data[key] = getOfflinePrinterDictionary()
+            elif(response_data_printer == UNREACHABLE):
+                data[key] = getUnreachablePrinterDictionary()
 
         data_json = json.dumps({
             'timestamp': int(time.time()),
@@ -104,3 +117,4 @@ while True:
         i += 1
     except Exception as e:
         print(e)
+        time.sleep(2)
