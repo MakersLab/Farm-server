@@ -43,3 +43,9 @@ def getUnreachablePrinterDictionary():
         'timePrinting': 0,
         'timeRemaining': 0,
     }
+
+def translatePrinterNamesToPrinterObjects(printerNames, printersConfig):
+    printers = {}
+    for printerName in printerNames:
+        printers[printerName] = printersConfig['printers'][printerName]
+    return printers
