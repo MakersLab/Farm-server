@@ -1,10 +1,17 @@
 import asyncio
-from aiohttp import ClientSession
+from aiohttp import ClientSession, FormData, MultipartWriter
 import json
+import uuid
 
 COMMAND_PRINT = 'COMMAND_PRINT'
 COMMAND_PAUSE = 'COMMAND_PAUSE'
 COMMAND_RESUME = 'COMMAND_RESUME'
+COMMAND_LOAD = 'COMMAND_LOAD'
+
+def addUniqueIdToFile(filename):
+    splitFilename = filename.split('.')
+    splitFilename[0] = '{filename}-{id}'.format(filename=splitFilename[0], id=str(uuid.uuid4())[:6])
+    return '.'.join(splitFilename)
 
 def getRequestBody(action):
     body = {}
@@ -16,9 +23,12 @@ def getRequestBody(action):
     elif (action == COMMAND_RESUME):
         body['command'] = 'pause'
         body['action'] = 'resume'
+    elif (action == COMMAND_LOAD):
+        pass
+
     return body
 
-async def fetch(session, url, apiKey, action):
+async def sendCommand(session, url, apiKey, action):
     headers = {
         'X-Api-Key': apiKey
     }
@@ -26,24 +36,52 @@ async def fetch(session, url, apiKey, action):
     async with session.post(url,headers=headers,json=body) as response:
         return await response.read()
 
-async def run(command, printers):
+async def sendFile(session, url, apiKey, action, fileName):
+    headers = {
+        'X-Api-Key': apiKey
+    }
+    body = {
+        'filename': addUniqueIdToFile(fileName)
+    }
+    filenameWithId = addUniqueIdToFile(fileName)
+    data = FormData()
+    data.add_field('file', open('upload/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
+
+    async with session.post(url,headers=headers, data=data) as response:
+        await response.read()
+
+        data = {'command': 'select'}
+        async with session.post(url+'/'+filenameWithId, headers=headers, json=data) as responseCommand:
+            return await responseCommand.read()
+
+
+async def run(command, printers, fileName):
+    print('thee renueth mee')
     print('making request')
     url = "http://googl.com/"
     tasks = []
 
     async with ClientSession() as session:
+        apiRoute = ''
+        if(command == COMMAND_LOAD):
+            apiRoute = '/api/files/local'
+        else:
+            apiRoute = '/api/job'
         for printer in printers:
-            url = 'http://{address}:{port}/api/job'.format(address=printers[printer]['address'],port=printers[printer]['port'])
-            task = asyncio.ensure_future(fetch(session, url, printers[printer]['apiKey'], command))
+            url = 'http://{address}:{port}{apiRoute}'.format(address=printers[printer]['address'],port=printers[printer]['port'], apiRoute=apiRoute)
+            if(command == COMMAND_LOAD):
+                task = asyncio.ensure_future(sendFile(session, url, printers[printer]['apiKey'], command, fileName))
+            else:
+                task = asyncio.ensure_future(sendCommand(session, url, printers[printer]['apiKey'], command))
             tasks.append(task)
 
         responses = await asyncio.gather(*tasks)
         return responses
 
-def makeRequest(command, printers):
+def makeRequest(command, printers, fileName=None):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    future = asyncio.ensure_future(run(command, printers))
+    future = asyncio.ensure_future(run(command, printers, fileName))
     return (loop.run_until_complete(future))
 
 

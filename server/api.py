@@ -8,6 +8,7 @@ from lib.requests import makeRequest
 COMMAND_PRINT = 'COMMAND_PRINT'
 COMMAND_PAUSE = 'COMMAND_PAUSE'
 COMMAND_RESUME = 'COMMAND_RESUME'
+COMMAND_LOAD = 'COMMAND_LOAD'
 
 PRINTERS_CONFIG_PATH = 'printers.yml'
 
@@ -40,7 +41,8 @@ def add_blueprint(app=None):
     def load():
         file = request.files['file']
         filename = secure_filename(file.filename)
-        file.save(os.path.join('upload',filename))
+        file.save(os.path.join('upload','file.gco'))
+        makeRequest(COMMAND_LOAD,translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename)
         return filename
 
     app.register_blueprint(api)
