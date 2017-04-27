@@ -7,6 +7,7 @@ COMMAND_PRINT = 'COMMAND_PRINT'
 COMMAND_PAUSE = 'COMMAND_PAUSE'
 COMMAND_RESUME = 'COMMAND_RESUME'
 COMMAND_LOAD = 'COMMAND_LOAD'
+COMMAND_CANCEL = 'COMMAND_CANCEL'
 
 def addUniqueIdToFile(filename):
     splitFilename = filename.split('.')
@@ -25,6 +26,8 @@ def getRequestBody(action):
         body['action'] = 'resume'
     elif (action == COMMAND_LOAD):
         pass
+    elif (action == COMMAND_CANCEL):
+        body['command'] = 'cancel'
 
     return body
 
