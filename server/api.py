@@ -47,7 +47,7 @@ def add_blueprint(app=None):
         file.save(os.path.join('upload','file.gco'))
         makeRequest(COMMAND_LOAD,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename)
-        return
+        return 'upload'
 
     @api.route('/cancel', methods=['POST'])
     def cancel():
