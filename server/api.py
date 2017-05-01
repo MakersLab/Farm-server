@@ -4,12 +4,14 @@ import os
 import inspect
 from lib.utils import loadConfig, translatePrinterNamesToPrinterObjects
 from lib.requests import makeRequest
+import json
 
 COMMAND_PRINT = 'COMMAND_PRINT'
 COMMAND_PAUSE = 'COMMAND_PAUSE'
 COMMAND_RESUME = 'COMMAND_RESUME'
 COMMAND_LOAD = 'COMMAND_LOAD'
 COMMAND_CANCEL = 'COMMAND_CANCEL'
+COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
 
 PRINTERS_CONFIG_PATH = 'printers.yml'
 
@@ -49,9 +51,15 @@ def add_blueprint(app=None):
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename)
         return 'upload'
 
+    @api.route('/load/<string:fileName>', methods=['POST'])
+    def loadFile(fileName):
+        response = makeRequest(COMMAND_LOAD_FILE,
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),
+                    fileName)
+        return json.dumps(response)
+
     @api.route('/cancel', methods=['POST'])
     def cancel():
-        print(getSelectedPrinters())
         makeRequest(COMMAND_CANCEL,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 

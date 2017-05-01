@@ -8,6 +8,7 @@ COMMAND_PAUSE = 'COMMAND_PAUSE'
 COMMAND_RESUME = 'COMMAND_RESUME'
 COMMAND_LOAD = 'COMMAND_LOAD'
 COMMAND_CANCEL = 'COMMAND_CANCEL'
+COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
 
 def addUniqueIdToFile(filename):
     splitFilename = filename.split('.')
@@ -28,6 +29,9 @@ def getRequestBody(action):
         pass
     elif (action == COMMAND_CANCEL):
         body['command'] = 'cancel'
+    elif (action == COMMAND_LOAD_FILE):
+        body['command'] = 'select'
+        body['print'] = True
 
     return body
 
@@ -37,29 +41,29 @@ async def sendCommand(session, url, apiKey, action):
     }
     body = getRequestBody(action)
     async with session.post(url,headers=headers,json=body) as response:
-        return await response.read()
+        responseText = await response.text()
+        return responseText, response.status
+
 
 async def sendFile(session, url, apiKey, action, fileName):
     headers = {
         'X-Api-Key': apiKey
     }
-    body = {
-        'filename': addUniqueIdToFile(fileName)
-    }
+
     filenameWithId = addUniqueIdToFile(fileName)
-    data = FormData()
-    data.add_field('file', open('upload/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
+    data = {}
+    if(action == COMMAND_LOAD):
+        data = FormData()
+        data.add_field('file', open('upload/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
 
     async with session.post(url,headers=headers, data=data) as response:
-        await response.read()
+        await response.text()
 
         data = {'command': 'select'}
         async with session.post(url+'/'+filenameWithId, headers=headers, json=data) as responseCommand:
             return await responseCommand.read()
 
-
 async def run(command, printers, fileName):
-    print('thee renueth mee')
     print('making request')
     url = "http://googl.com/"
     tasks = []
@@ -68,6 +72,8 @@ async def run(command, printers, fileName):
         apiRoute = ''
         if(command == COMMAND_LOAD):
             apiRoute = '/api/files/local'
+        elif(command == COMMAND_LOAD_FILE):
+            apiRoute = '/api/files/local/{0}'.format(fileName)
         else:
             apiRoute = '/api/job'
         for printer in printers:
