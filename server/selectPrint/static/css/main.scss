@@ -1,0 +1,31 @@
+body {
+  background-color: #c7f7be;
+}
+
+.item {
+  background-color: #f7f3f7;
+  box-shadow: 0px 0px 20px #555;
+  &__image {
+    text-align: center;
+    &-ellement {
+      width: 70%;
+    }
+  }
+
+  &__heading {
+    text-align: center;
+    &-ellement {
+    }
+  }
+  &__description {
+    text-align: center;
+    &-ellement {
+    }
+  }
+  &__button {
+    text-align: center;
+    margin-top: 30px;
+    &-ellement {
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<div id="carousel">
+    {% for item in items['items'] %}
+      <div class="item row">
+      {% include "partials/item.jinja2" %}
+      </div>
+    {% endfor %}
+</div>

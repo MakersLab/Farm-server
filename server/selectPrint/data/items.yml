@@ -1,0 +1,21 @@
+items:
+  - name: Statue
+    gcode-filename: statue.gco
+    image-filename: test-image01.png
+    description: description
+    price: 0.0
+  - name: Dog
+    code-filename: dog.gco
+    image-filename: test-image02.png
+    description: description
+    price: 0.0
+  - name: Plane
+    gcode-filename: plane.gco
+    image-filename: test-image03.png
+    description: description
+    price: 0.0
+
+
+paths:
+  gcode: data/gcode/
+  image: img/title/

@@ -1,0 +1,19 @@
+body {
+  background-color: #c7f7be; }
+
+.item {
+  background-color: #f7f3f7;
+  box-shadow: 0px 0px 20px #555; }
+  .item__image {
+    text-align: center; }
+    .item__image-ellement {
+      width: 70%; }
+  .item__heading {
+    text-align: center; }
+  .item__description {
+    text-align: center; }
+  .item__button {
+    text-align: center;
+    margin-top: 30px; }
+
+/*# sourceMappingURL=main.css.map */
