@@ -3,6 +3,8 @@ from lib.utils import loadConfig, removeUnnecessaryData
 import json
 from flask_cors import CORS, cross_origin
 import api
+import selectPrint
+import traceback
 
 CONFIG = loadConfig('config.yml')
 FILE_UPLOAD_PATH = CONFIG['api']['file-upload-path']
@@ -29,6 +31,7 @@ def index():
     return send_from_directory('static','index.html')
 
 api.add_blueprint(app)
+selectPrint.add_blueprint(app)
 
 if __name__ == '__main__':
     app.run(debug=True, port=CONFIG['api']['port'],host='0.0.0.0',threaded=True)
