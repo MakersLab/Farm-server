@@ -1,3 +1,4 @@
+
 $(document).ready(function () {
 
   $("#carousel").owlCarousel({
@@ -19,10 +20,10 @@ printerStateCallback = function (data) {
   }
 };
 
-function loadAndPrint(fileName) {
-
+function loadAndPrint(fileName, index) {
   var formData = new FormData();
-  formData.append('selectedPrinters',$('#printerSelect').find(':selected').val());
+  console.log($('.printerSelect'))
+  formData.append('selectedPrinters',$($('.printerSelect')[index-1]).find(':selected').val());
 
   $.ajax({
     url: '/api/load/'+fileName,
@@ -49,7 +50,7 @@ function getPrinters() {
     type: 'GET',
     success: function (data){
       data = JSON.parse(data);
-      var printerSelect = $('#printerSelect');
+      var printerSelect = $('.printerSelect');
       printerSelect.append();
       $.each(data.printers,function (index, value) {
         printerSelect.append($('<option></option>').attr('value',index).text(value.name));
