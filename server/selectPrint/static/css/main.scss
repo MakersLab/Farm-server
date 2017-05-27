@@ -1,31 +1,97 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i|Raleway:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i|Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i');
+
+
 body {
-  background-color: #c7f7be;
+  background-color: #fdff92;
+  font-family: 'Roboto';
 }
 
 .item {
-  background-color: #f7f3f7;
-  box-shadow: 0px 0px 20px #555;
   &__image {
     text-align: center;
+    height: 100%;
     &-ellement {
-      width: 70%;
+      width: 100%;
+      height: 100%;
     }
   }
 
   &__heading {
     text-align: center;
     &-ellement {
+      font-size: 6em;
     }
   }
   &__description {
     text-align: center;
     &-ellement {
+      font-size: 4em;
     }
   }
   &__button {
     text-align: center;
-    margin-top: 30px;
     &-ellement {
     }
   }
+}
+
+.bottom-row {
+  height: 400px;
+}
+
+.button-row {
+  position: relative;
+  transform: translate(0px, -8px);
+  background-color: #ffea62;
+  justify-content: center;
+  height: 35%;
+  padding-top:0;
+  margin-top:0;
+  text-align: center;
+  width: 100%;
+  .printerSelect {
+    background-color: #fffcde;
+    justify-content: center;
+    margin: auto;
+    font-size: 4em;
+    height: 100%;
+    width: 1024px;
+    text-align-last:center;
+    border-radius: 0;
+  }
+  .print-button {
+    border-radius: 0;
+    transform: translate(41px, 0);
+    background-color: #fffcde;
+    color: #1d1d1d;
+    border: solid 1.5px #aaaaaa;
+    text-align: center;
+    font-size: 4em;
+    height: 100%;
+    width: 1024px;
+    font-weight: normal;
+    transition: 0.3s;
+    &:hover {
+      background-color: #f2eca7;
+    }
+  }
+}
+
+.description-row {
+  height: 70%;
+  justify-content: center;
+
+}
+
+.aside {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.centered {
+  position: relative;
+  top: 50%;
+  transform: translate(0, -50%);
 }

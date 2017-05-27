@@ -1,15 +1,27 @@
-<div class="ten columns offset-by-one item__image">
-  <img class="item__image-ellement" src="{{ url_for('Select-Print.static', filename=items['paths']['image']+item['image-filename']) }}" alt="">
+
+<div class="twelve columns item__image">
+  <img class="item__image-ellement"
+       src="{{ url_for('Select-Print.static', filename=items['paths']['image']+item['image-filename']) }}" alt="">
 </div>
 <br>
-<div class="four columns offset-by-four item__heading">
-  <h2 class="item__heading-ellement">{{ item.name }}</h2>
-</div>
+
 <br>
-<div class="six columns offset-by-three item__description">
-  <div class="description item__description-ellement">{{ item.description }}</div>
-</div>
-<br>
-<div class="two columns offset-by-five item__button purchase">
-  <button class="item__button-ellement" onClick="loadAndPrint('{{ item['gcode-filename'] }}')">I want it !</button>
+<div class="twelve columns bottom-row">
+  <div class="twelve columns button-row">
+    <div class="six columns aside">
+      {% include "partials/select.jinja2" %}
+    </div>
+    <div class="six columns item__button aside">
+      <button class="print-button" onClick="loadAndPrint('{{ item['gcode-filename'] }}',{{ count }})">PRINT</button>
+    </div>
+  </div>
+  <div class="twelve columns description-row">
+    <div class="six columns item__heading aside">
+      <h2 class="item__heading-ellement centered">{{ item.name }}</h2>
+    </div>
+    <br>
+    <div class="six columns item__description aside">
+      <div class="description item__description-ellement centered">{{ item.description }}</div>
+    </div>
+  </div>
 </div>
