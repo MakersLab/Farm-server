@@ -12,6 +12,7 @@ COMMAND_RESUME = 'COMMAND_RESUME'
 COMMAND_LOAD = 'COMMAND_LOAD'
 COMMAND_CANCEL = 'COMMAND_CANCEL'
 COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
+COMMAND_PREHEAT = 'COMMAND_PREHEAT'
 
 PRINTERS_CONFIG_PATH = 'printers.yml'
 
@@ -64,5 +65,15 @@ def add_blueprint(app=None):
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
         return 'cancel'
+
+    @api.route('/preheat', methods=['POST'])
+    def preheat():
+        print(request.form['tool'])
+        print(request.form['bed'])
+        print(request.form['selectedPrinters'])
+
+        response = makeRequest(COMMAND_PREHEAT,
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),toolTemperature=request.form['tool'], bedTemperature=request.form['bed'])
+        return json.dumps(response)
 
     app.register_blueprint(api)

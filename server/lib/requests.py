@@ -9,10 +9,11 @@ COMMAND_RESUME = 'COMMAND_RESUME'
 COMMAND_LOAD = 'COMMAND_LOAD'
 COMMAND_CANCEL = 'COMMAND_CANCEL'
 COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
+COMMAND_PREHEAT= 'COMMAND_PREHEAT'
 
 def addUniqueIdToFile(filename):
     splitFilename = filename.split('.')
-    splitFilename[0] = '{filename}-{id}'.format(filename=splitFilename[0], id=str(uuid.uuid4())[:6])
+    splitFilename[0] = '{filename}'.format(filename=splitFilename[0])
     return '.'.join(splitFilename)
 
 def getRequestBody(action):
@@ -32,7 +33,6 @@ def getRequestBody(action):
     elif (action == COMMAND_LOAD_FILE):
         body['command'] = 'select'
         body['print'] = True
-
     return body
 
 async def sendCommand(session, url, apiKey, action):
@@ -61,9 +61,33 @@ async def sendFile(session, url, apiKey, action, fileName):
 
         data = {'command': 'select'}
         async with session.post(url+'/'+filenameWithId, headers=headers, json=data) as responseCommand:
-            return await responseCommand.read()
+            return await responseCommand.read(), responseCommand.status
 
-async def run(command, printers, fileName):
+async def sendToolCommand(session, url, apiKey, toolTemperature):
+    headers = {
+        'X-Api-Key': apiKey
+    }
+    data = {
+        'command': 'target',
+        'targets': {
+            'tool0': int(toolTemperature),
+        },
+    }
+    async with session.post(url, headers=headers, json=data) as response:
+        return await response.text(), response.status
+
+async def sendBedCommand(session, url, apiKey, bedTemperature):
+    headers = {
+        'X-Api-Key': apiKey
+    }
+    data = {
+        'command': 'target',
+        'target': int(bedTemperature),
+    }
+    async with session.post(url, headers=headers, json=data) as response:
+        return await response.text(), response.status
+
+async def run(command, printers, fileName, toolTemperature, bedTemperature):
     print('making request')
     url = "http://googl.com/"
     tasks = []
@@ -74,23 +98,31 @@ async def run(command, printers, fileName):
             apiRoute = '/api/files/local'
         elif(command == COMMAND_LOAD_FILE):
             apiRoute = '/api/files/local/{0}'.format(fileName)
+        elif(command == COMMAND_PREHEAT):
+            apiRoute = '/api/printer/{0}'
         else:
             apiRoute = '/api/job'
         for printer in printers:
             url = 'http://{address}:{port}{apiRoute}'.format(address=printers[printer]['address'],port=printers[printer]['port'], apiRoute=apiRoute)
             if(command == COMMAND_LOAD):
                 task = asyncio.ensure_future(sendFile(session, url, printers[printer]['apiKey'], command, fileName))
+                tasks.append(task)
+            elif( command == COMMAND_PREHEAT):
+
+                tasks.append(asyncio.ensure_future(sendToolCommand(session, url.format('tool'), printers[printer]['apiKey'], toolTemperature)))
+
+                tasks.append(asyncio.ensure_future(sendBedCommand(session, url.format('bed'), printers[printer]['apiKey'], bedTemperature)))
             else:
                 task = asyncio.ensure_future(sendCommand(session, url, printers[printer]['apiKey'], command))
-            tasks.append(task)
+                tasks.append(task)
 
         responses = await asyncio.gather(*tasks)
         return responses
 
-def makeRequest(command, printers, fileName=None):
+def makeRequest(command, printers, fileName=None, toolTemperature=None, bedTemperature=None):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    future = asyncio.ensure_future(run(command, printers, fileName))
+    future = asyncio.ensure_future(run(command, printers, fileName, toolTemperature=toolTemperature, bedTemperature=bedTemperature))
     return (loop.run_until_complete(future))
 
 
