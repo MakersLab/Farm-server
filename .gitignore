@@ -2,8 +2,8 @@
 *.pyc
 /server/build/
 server/static/
-server/selectPrint/static/css/*.css
-server/selectPrint/static/css/*.css.map
+server/selectPrint/static/css/main.css
+server/selectPrint/static/css/main.css.map
 server/upload/*
 server/printer-state.json
 server/printers.yml
