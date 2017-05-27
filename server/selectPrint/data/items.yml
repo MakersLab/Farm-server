@@ -1,18 +1,18 @@
 items:
   - name: Statue
-    gcode-filename: statue.gco
-    image-filename: test-image01.png
-    description: description
+    gcode-filename: 01.gco
+    image-filename: 01.png
+    description: 12 minutes
     price: 0.0
   - name: Dog
-    code-filename: dog.gco
-    image-filename: test-image02.png
-    description: description
+    gcode-filename: 02.gco
+    image-filename: 02.png
+    description: 2 seconds
     price: 0.0
   - name: Plane
-    gcode-filename: plane.gco
-    image-filename: test-image03.png
-    description: description
+    gcode-filename: 03.gco
+    image-filename: 03.png
+    description: 13 hours
     price: 0.0
 
 
