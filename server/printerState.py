@@ -85,36 +85,39 @@ async def run():
         with open('printer-state.json','w') as file:
             file.write(data_json)
 
-
-loop = asyncio.get_event_loop()
-
-nextTime = time.time()
-
-def getData():
+def getData(loop):
     future = asyncio.ensure_future(run())
     loop.run_until_complete(future)
 
-i = 1
-startTime = time.time()
-expectedTime = startTime
-updateInterval = int(CONFIG['printer-state']['update-interval'])
-while True:
-    try:
-        if (nextTime > time.time()):
-            timeToSleep = nextTime - time.time()
-            if(timeToSleep > 15):
-                print('Time to sleep is too big next time {0} time{1} '.format(nextTime,time.time()))
-                timeToSleep = 15
-            time.sleep(((nextTime - time.time())))
-        elif (nextTime < time.time()):
-            pass
-            # updateInterval += 100
-            # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
-        print('{}: Time difference from expected'.format(time.time()),time.time() - (startTime+(i-1)*(updateInterval/1000)))
-        getData()
-        expectedTime += updateInterval
-        nextTime = startTime + (i*updateInterval)/1000
-        i += 1
-    except Exception as e:
-        print(e)
-        time.sleep(2)
+def main():
+    loop = asyncio.get_event_loop()
+
+    nextTime = time.time()
+    i = 1
+    startTime = time.time()
+    expectedTime = startTime
+    updateInterval = int(CONFIG['printer-state']['update-interval'])
+    while True:
+        try:
+            if (nextTime > time.time()):
+                timeToSleep = nextTime - time.time()
+                if(timeToSleep > 15):
+                    print('Time to sleep is too big next time {0} time{1} '.format(nextTime,time.time()))
+                    timeToSleep = 15
+                time.sleep(((nextTime - time.time())))
+                # time.sleep(0.5)
+            elif (nextTime < time.time()):
+                pass
+                # updateInterval += 100
+                # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
+            # print('{}: Time difference from expected'.format(time.time()),time.time() - (startTime+(i-1)*(updateInterval/1000)))
+            getData(loop)
+            expectedTime += updateInterval
+            nextTime = startTime + (i*updateInterval)/1000
+            i += 1
+        except Exception as e:
+            print(e)
+            time.sleep(2)
+
+if __name__ == '__main__':
+    main()

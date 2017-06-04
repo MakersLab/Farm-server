@@ -33,5 +33,8 @@ def index():
 api.add_blueprint(app)
 selectPrint.add_blueprint(app)
 
+def main():
+    app.run(debug=False, port=CONFIG['api']['port'],host='0.0.0.0',threaded=True)
+
 if __name__ == '__main__':
-    app.run(debug=True, port=CONFIG['api']['port'],host='0.0.0.0',threaded=True)
+    main()
