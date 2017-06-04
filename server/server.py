@@ -6,7 +6,7 @@ import api
 import selectPrint
 import traceback
 
-CONFIG = loadConfig('config.yml')
+CONFIG = loadConfig('config/config.yml')
 FILE_UPLOAD_PATH = CONFIG['api']['file-upload-path']
 
 app = Flask(__name__)
@@ -15,7 +15,7 @@ app.config['UPLOAD_FOLDER'] = FILE_UPLOAD_PATH
 
 @app.route('/api/printer-config')
 def printerConfig():
-    return json.dumps(removeUnnecessaryData(loadConfig('printers.yml')))
+    return json.dumps(removeUnnecessaryData(loadConfig('config/printers.yml')))
 
 @app.route('/api/test')
 def test():

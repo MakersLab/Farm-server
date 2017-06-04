@@ -7,7 +7,7 @@ import json
 
 from lib.utils import loadFromFile, loadConfig, loadJsonObject
 
-CONFIG = loadConfig('config.yml')
+CONFIG = loadConfig('config/config.yml')
 UPDATE_INTERVAL = CONFIG['websocket']['state-update-interval']
 
 logger = logging.getLogger('websockets')
@@ -18,7 +18,7 @@ updateTime = time.time()
 connected = set()
 
 distributedMessage = '...'
-printerStateFileName = 'printer-state.json'
+printerStateFileName = 'data/printer-state.json'
 
 def shouldUpdateMessage():
     global updateTime

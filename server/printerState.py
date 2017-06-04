@@ -5,7 +5,7 @@ import yaml
 import time
 from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary
 
-CONFIG = loadConfig('config.yml')
+CONFIG = loadConfig('config/config.yml')
 
 JOB_INFO = 'JOB_INFO'
 PRINTER_INFO = 'PRINTER_INFO'
@@ -29,8 +29,7 @@ async def run():
     urlJobs = "http://{address}:{port}/api/job"
     urlPrinter = "http://{address}:{port}/api/printer"
     tasks = []
-    config = loadConfig('printers.yml')
-
+    config = loadConfig('config/printers.yml')
     async with ClientSession() as session:
         printers = config['printers']
         for key in config['printers']:
@@ -82,7 +81,7 @@ async def run():
             'timestamp': int(time.time()),
             'printers': data,
         })
-        with open('printer-state.json','w') as file:
+        with open('data/printer-state.json','w') as file:
             file.write(data_json)
 
 def getData(loop):

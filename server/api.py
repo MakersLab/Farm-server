@@ -14,7 +14,7 @@ COMMAND_CANCEL = 'COMMAND_CANCEL'
 COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
 COMMAND_PREHEAT = 'COMMAND_PREHEAT'
 
-PRINTERS_CONFIG_PATH = 'printers.yml'
+PRINTERS_CONFIG_PATH = 'config/printers.yml'
 
 def getSelectedPrinters():
     return request.form['selectedPrinters'].split(',')

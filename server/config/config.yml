@@ -1,9 +1,9 @@
 printer-state:
-  update-interval: 2500
+  update-interval: 750
 
 websocket:
   port: 8001
-  state-update-interval: 2500
+  state-update-interval: 1000
 
 api:
   port: 8000
