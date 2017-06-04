@@ -47,7 +47,7 @@ def add_blueprint(app=None):
     def load():
         file = request.files['file']
         filename = secure_filename(file.filename)
-        file.save(os.path.join('upload','file.gco'))
+        file.save(os.path.join('data','file.gco'))
         makeRequest(COMMAND_LOAD,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename)
         return 'upload'

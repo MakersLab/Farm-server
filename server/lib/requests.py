@@ -54,7 +54,7 @@ async def sendFile(session, url, apiKey, action, fileName):
     data = {}
     if(action == COMMAND_LOAD):
         data = FormData()
-        data.add_field('file', open('upload/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
+        data.add_field('file', open('data/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
 
     async with session.post(url,headers=headers, data=data) as response:
         await response.text()
