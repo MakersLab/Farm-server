@@ -1,5 +1,7 @@
+#!/usr/bin/env python3.5
 from multiprocessing import Process
 import time
+import os
 
 from printerState import main as printerStateMain
 from server import main as serverMain

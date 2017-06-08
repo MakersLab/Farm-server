@@ -4,6 +4,7 @@ import json
 import yaml
 import time
 from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary
+import os
 
 CONFIG = loadConfig('config/config.yml')
 
@@ -81,7 +82,8 @@ async def run():
             'timestamp': int(time.time()),
             'printers': data,
         })
-        with open('data/printer-state.json','w') as file:
+        path = os.path.dirname(__file__)
+        with open(os.path.join(path, 'data/printer-state.json'),'w') as file:
             file.write(data_json)
 
 def getData(loop):

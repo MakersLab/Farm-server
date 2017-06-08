@@ -1,9 +1,10 @@
 import yaml
 import json
-
+import os
 def loadFromFile(file_name):
     fileContents = ''
-    with open(file_name, 'r') as file:
+    path = '/'.join(os.path.dirname(__file__).split('/')[0:-1])
+    with open((os.path.join(path,file_name)), 'r') as file:
         fileContents = file.read()
         file.close()
     return fileContents
