@@ -4,6 +4,7 @@ import os
 
 def main():
     os.system('git pull')
+    os.system('chmod 771 server/main.py')
     downloadBuild.main()
 
 if __name__ == '__main__':
