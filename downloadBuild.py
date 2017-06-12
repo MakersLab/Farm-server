@@ -7,8 +7,8 @@ import shutil
 import os
 
 RELEASES_URL = 'https://api.github.com/repos/MakersLab/farm-client/releases/latest'
-DOWNLOAD_FOLDER = '.\client-build'
-DESTINATION_FOLDER = '.\server\static\\'
+DOWNLOAD_FOLDER = './client-build'
+DESTINATION_FOLDER = './server/static/'
 
 def deleteContentsOfFolder(path):
     if (os.path.isdir(path)):
