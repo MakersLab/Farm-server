@@ -43,7 +43,6 @@ class ServiceManager:
                 self.services[serviceName]['running'] = False
 
     def updateServiceState(self):
-        self.log('Checking services')
         servicesRunning = []
         servicesStopped = []
         for serviceName in self.services:
@@ -52,8 +51,8 @@ class ServiceManager:
                 servicesRunning.append(self.services[serviceName]['name'])
             else:
                 servicesStopped.append(self.services[serviceName]['name'])
-        self.log('Services running: {0}'.format(','.join(servicesRunning)))
-        self.log('Services stopped: {0}'.format(','.join(servicesStopped)))
+        if(len(servicesStopped) != 0):
+            self.log('Services stopped: {0}'.format(','.join(servicesStopped)))
 
     def restartStoppedServices(self):
         for serviceName in self.services:
