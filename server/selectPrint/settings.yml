@@ -1,5 +1,5 @@
 paths:
-  items: selectPrint/data/items.yml
+  items: data/items.yml
   templates: templates
 
 printer:
