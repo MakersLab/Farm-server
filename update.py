@@ -4,6 +4,7 @@ import os
 
 def main():
     os.system('git pull')
+    os.system('python3.5 -m pip install -r requirements.txt')
     os.system('chmod 771 server/main.py')
     downloadBuild.main()
 
