@@ -1,0 +1,7 @@
+paths:
+  items: data/items.yml
+  templates: templates
+
+printer:
+  api-key: insert api key here
+  address: insert address here

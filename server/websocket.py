@@ -7,7 +7,7 @@ import json
 
 from lib.utils import loadFromFile, loadConfig, loadJsonObject
 
-CONFIG = loadConfig('config.yml')
+CONFIG = loadConfig('config/config.yml')
 UPDATE_INTERVAL = CONFIG['websocket']['state-update-interval']
 
 logger = logging.getLogger('websockets')
@@ -18,7 +18,7 @@ updateTime = time.time()
 connected = set()
 
 distributedMessage = '...'
-printerStateFileName = 'printer-state.json'
+printerStateFileName = 'data/printer-state.json'
 
 def shouldUpdateMessage():
     global updateTime
@@ -70,7 +70,10 @@ async def handler(websocket, path):
     for task in pending:
         task.cancel()
 
-start_server = websockets.serve(handler, '0.0.0.0', CONFIG['websocket']['port'])
+def main():
+    start_server = websockets.serve(handler, '0.0.0.0', CONFIG['websocket']['port'])
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+if __name__ == '__main__':
+    main()

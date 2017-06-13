@@ -1,0 +1,13 @@
+[Unit]
+Description=Backend service for 3D printer farm controller
+After=network.target
+
+[Service]
+Type=simple
+User={user}
+WorkingDirectory={workingDirectory}
+ExecStart={execStart}
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

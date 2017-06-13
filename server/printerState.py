@@ -3,26 +3,34 @@ from aiohttp import ClientSession
 import json
 import yaml
 import time
-from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary
+from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary
+import os
 
-CONFIG = loadConfig('config.yml')
+CONFIG = loadConfig('config/config.yml')
 
 JOB_INFO = 'JOB_INFO'
 PRINTER_INFO = 'PRINTER_INFO'
+
+UNREACHABLE = 'UNREACHABLE'
+OFFLINE = 'OFFLINE'
 
 async def fetch(url, session,apiKey,printer,dataType):
     headers = {
         'X-Api-Key': apiKey,
     }
-    async with session.get(url,headers=headers) as response:
-        return await response.read(),printer,dataType
+    try:
+        async with session.get(url,headers=headers, timeout=2) as response:
+            response = await response.read()
+            return response,printer,dataType
+    except Exception as e:
+        return UNREACHABLE,printer,dataType
+
 
 async def run():
     urlJobs = "http://{address}:{port}/api/job"
     urlPrinter = "http://{address}:{port}/api/printer"
     tasks = []
-    config = loadConfig('printers.yml')
-
+    config = loadConfig('config/printers.yml')
     async with ClientSession() as session:
         printers = config['printers']
         for key in config['printers']:
@@ -45,14 +53,17 @@ async def run():
             for response in responses:
                 if(response[1]==key):
                     try:
-                        if(response[2]==PRINTER_INFO):
+                        if(response[2]==PRINTER_INFO and response[0] != UNREACHABLE):
                                 response_data_printer = json.loads(response[0].decode('utf-8'))
-                        elif(response[2]==JOB_INFO):
+                        elif(response[2]==JOB_INFO and response[0] != UNREACHABLE):
                             response_data_job = json.loads(response[0].decode('utf-8'))
+                        else:
+                            response_data_printer = UNREACHABLE
+                            response_data_job = UNREACHABLE
                     except Exception as e:
-                        response_data_printer = 'offline'
-                        response_data_job = 'offline'
-            if(response_data_printer != 'offline'):
+                        response_data_printer = OFFLINE
+                        response_data_job = OFFLINE
+            if(response_data_printer != OFFLINE and response_data_printer != UNREACHABLE):
                 data[key] = {
                     'state':response_data_printer['state']['text'],
                     'progress': response_data_job['progress']['completion'],
@@ -62,45 +73,52 @@ async def run():
                     'timePrinting': response_data_job['progress']['printTime'],
                     'timeRemaining': response_data_job['progress']['printTimeLeft'],
                 }
-            else:
+            elif(response_data_printer == OFFLINE):
                 data[key] = getOfflinePrinterDictionary()
+            elif(response_data_printer == UNREACHABLE):
+                data[key] = getUnreachablePrinterDictionary()
 
         data_json = json.dumps({
             'timestamp': int(time.time()),
             'printers': data,
         })
-        with open('printer-state.json','w') as file:
+        path = os.path.dirname(__file__)
+        with open(os.path.join(path, 'data/printer-state.json'),'w') as file:
             file.write(data_json)
 
-
-loop = asyncio.get_event_loop()
-
-nextTime = time.time()
-
-def getData():
+def getData(loop):
     future = asyncio.ensure_future(run())
     loop.run_until_complete(future)
 
-i = 1
-startTime = time.time()
-expectedTime = startTime
-updateInterval = int(CONFIG['printer-state']['update-interval'])
-while True:
-    try:
-        if (nextTime > time.time()):
-            timeToSleep = nextTime - time.time()
-            if(timeToSleep > 15):
-                print('Time to sleep is too big next time {0} time{1} '.format(nextTime,time.time()))
-                timeToSleep = 15
-            time.sleep(((nextTime - time.time())))
-        elif (nextTime < time.time()):
-            pass
-            # updateInterval += 100
-            # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
-        print('{}: Time difference from expected'.format(time.time()),time.time() - (startTime+(i-1)*(updateInterval/1000)))
-        getData()
-        expectedTime += updateInterval
-        nextTime = startTime + (i*updateInterval)/1000
-        i += 1
-    except Exception as e:
-        print(e)
+def main():
+    loop = asyncio.get_event_loop()
+
+    nextTime = time.time()
+    i = 1
+    startTime = time.time()
+    expectedTime = startTime
+    updateInterval = int(CONFIG['printer-state']['update-interval'])
+    while True:
+        try:
+            if (nextTime > time.time()):
+                timeToSleep = nextTime - time.time()
+                if(timeToSleep > 15):
+                    print('Time to sleep is too big next time {0} time{1} '.format(nextTime,time.time()))
+                    timeToSleep = 15
+                time.sleep(((nextTime - time.time())))
+                # time.sleep(0.5)
+            elif (nextTime < time.time()):
+                pass
+                # updateInterval += 100
+                # print('Lagging behind, adding 100ms to update time interval, now is {}ms'.format(updateInterval))
+            # print('{}: Time difference from expected'.format(time.time()),time.time() - (startTime+(i-1)*(updateInterval/1000)))
+            getData(loop)
+            expectedTime += updateInterval
+            nextTime = startTime + (i*updateInterval)/1000
+            i += 1
+        except Exception as e:
+            print(e)
+            time.sleep(2)
+
+if __name__ == '__main__':
+    main()

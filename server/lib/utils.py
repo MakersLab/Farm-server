@@ -1,9 +1,10 @@
 import yaml
 import json
-
+import os
 def loadFromFile(file_name):
     fileContents = ''
-    with open(file_name, 'r') as file:
+    path = '/'.join(os.path.dirname(__file__).split('/')[0:-1])
+    with open((os.path.join(path,file_name)), 'r') as file:
         fileContents = file.read()
         file.close()
     return fileContents
@@ -24,11 +25,28 @@ def removeUnnecessaryData(config):
 
 def getOfflinePrinterDictionary():
     return {
-        'state': 'Not working',
+        'state': 'Printer is unreachable',
         'progress': 0,
         'nozzleTemperature': 0,
         'bedTemperature': 0,
-        'fileName': 'x',
+        'fileName': '',
         'timePrinting': 0,
         'timeRemaining': 0,
                 }
+
+def getUnreachablePrinterDictionary():
+    return {
+        'state': 'Octoprint is unreachable',
+        'progress': 0,
+        'nozzleTemperature': 0,
+        'bedTemperature': 0,
+        'fileName': '',
+        'timePrinting': 0,
+        'timeRemaining': 0,
+    }
+
+def translatePrinterNamesToPrinterObjects(printerNames, printersConfig):
+    printers = {}
+    for printerName in printerNames:
+        printers[printerName] = printersConfig['printers'][printerName]
+    return printers
