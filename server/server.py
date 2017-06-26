@@ -3,7 +3,6 @@ from lib.utils import loadConfig, removeUnnecessaryData
 import json
 from flask_cors import CORS, cross_origin
 import api
-import selectPrint
 import traceback
 
 CONFIG = loadConfig('config/config.yml')
@@ -31,7 +30,6 @@ def index():
     return send_from_directory('static','index.html')
 
 api.add_blueprint(app)
-selectPrint.add_blueprint(app)
 
 def main():
     app.run(debug=False, port=CONFIG['api']['port'],host='0.0.0.0',threaded=True)
