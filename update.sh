@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-python3.5 update.py
+python3.6 update.py
