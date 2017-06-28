@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from werkzeug.utils import secure_filename
 import os
 import inspect
-from lib.utils import loadConfig, translatePrinterNamesToPrinterObjects
+from lib.utils import loadConfig, translatePrinterNamesToPrinterObjects, loadFromFile
 from lib.requests import makeRequest
 import json
 
@@ -13,8 +13,10 @@ COMMAND_LOAD = 'COMMAND_LOAD'
 COMMAND_CANCEL = 'COMMAND_CANCEL'
 COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
 COMMAND_PREHEAT = 'COMMAND_PREHEAT'
+COMMAND_SHUTDOWN = 'COMMAND_SHUTDOWN'
 
 PRINTERS_CONFIG_PATH = 'config/printers.yml'
+SHUTDOWN_SCRIPT_PATH = 'shutdown.sh'
 
 def getSelectedPrinters():
     return request.form['selectedPrinters'].split(',')
@@ -74,6 +76,25 @@ def add_blueprint(app=None):
 
         response = makeRequest(COMMAND_PREHEAT,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),toolTemperature=request.form['tool'], bedTemperature=request.form['bed'])
+        return json.dumps(response)
+
+    @api.route('/system/shutdown/<string:target>', methods=['POST'])
+    def shutdown(target):
+        printers = []
+        if(target == 'farm'):
+            printers = loadConfig(PRINTERS_CONFIG_PATH)['printers'].keys()
+        elif(target == 'printers'):
+            printers = getSelectedPrinters()
+
+        response = makeRequest(COMMAND_SHUTDOWN,
+                    translatePrinterNamesToPrinterObjects(printers, loadConfig(PRINTERS_CONFIG_PATH)))
+
+        if(target == 'farm'):
+            shutdownCommand = loadFromFile(SHUTDOWN_SCRIPT_PATH)
+            shutdownCommand = shutdownCommand.splitlines()
+            for command in shutdownCommand:
+                os.system(command)
+
         return json.dumps(response)
 
     app.register_blueprint(api)

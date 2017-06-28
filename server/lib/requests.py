@@ -10,6 +10,7 @@ COMMAND_LOAD = 'COMMAND_LOAD'
 COMMAND_CANCEL = 'COMMAND_CANCEL'
 COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
 COMMAND_PREHEAT= 'COMMAND_PREHEAT'
+COMMAND_SHUTDOWN = 'COMMAND_SHUTDOWN'
 
 def addUniqueIdToFile(filename):
     splitFilename = filename.split('.')
@@ -89,7 +90,6 @@ async def sendBedCommand(session, url, apiKey, bedTemperature):
 
 async def run(command, printers, fileName, toolTemperature, bedTemperature):
     print('making request')
-    url = "http://googl.com/"
     tasks = []
 
     async with ClientSession() as session:
@@ -100,6 +100,8 @@ async def run(command, printers, fileName, toolTemperature, bedTemperature):
             apiRoute = '/api/files/local/{0}'.format(fileName)
         elif(command == COMMAND_PREHEAT):
             apiRoute = '/api/printer/{0}'
+        elif(command == COMMAND_SHUTDOWN):
+            apiRoute = '/api/system/commands/core/shutdown'
         else:
             apiRoute = '/api/job'
         for printer in printers:
