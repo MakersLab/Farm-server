@@ -2,14 +2,12 @@ import asyncio
 from aiohttp import ClientSession, FormData, MultipartWriter
 import json
 import uuid
+import actions
+from lib.utils import loadJsonObject, writeJsonObject
+from lib.actionPermission import canPerformCommand
 
-COMMAND_PRINT = 'COMMAND_PRINT'
-COMMAND_PAUSE = 'COMMAND_PAUSE'
-COMMAND_RESUME = 'COMMAND_RESUME'
-COMMAND_LOAD = 'COMMAND_LOAD'
-COMMAND_CANCEL = 'COMMAND_CANCEL'
-COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
-COMMAND_PREHEAT= 'COMMAND_PREHEAT'
+PRINTER_STATE_PATH = 'data/printer-state.json'
+FAKE_PRINTER_STATE_PATH = 'data/fake-state.json'
 
 def addUniqueIdToFile(filename):
     splitFilename = filename.split('.')
@@ -18,19 +16,19 @@ def addUniqueIdToFile(filename):
 
 def getRequestBody(action):
     body = {}
-    if (action == COMMAND_PRINT):
+    if (action == actions.COMMAND_PRINT):
         body['command'] = 'start'
-    elif (action == COMMAND_PAUSE):
+    elif (action == actions.COMMAND_PAUSE):
         body['command'] = 'pause'
         body['action'] = 'pause'
-    elif (action == COMMAND_RESUME):
+    elif (action == actions.COMMAND_RESUME):
         body['command'] = 'pause'
         body['action'] = 'resume'
-    elif (action == COMMAND_LOAD):
+    elif (action == actions.COMMAND_LOAD):
         pass
-    elif (action == COMMAND_CANCEL):
+    elif (action == actions.COMMAND_CANCEL):
         body['command'] = 'cancel'
-    elif (action == COMMAND_LOAD_FILE):
+    elif (action == actions.COMMAND_LOAD_FILE):
         body['command'] = 'select'
         body['print'] = True
     return body
@@ -52,7 +50,7 @@ async def sendFile(session, url, apiKey, action, fileName):
 
     filenameWithId = addUniqueIdToFile(fileName)
     data = {}
-    if(action == COMMAND_LOAD):
+    if(action == actions.COMMAND_LOAD):
         data = FormData()
         data.add_field('file', open('data/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
 
@@ -87,34 +85,56 @@ async def sendBedCommand(session, url, apiKey, bedTemperature):
     async with session.post(url, headers=headers, json=data) as response:
         return await response.text(), response.status
 
+async def invalidAction():
+    return 'cant perform action',400
+
+def finishPrint(printers):
+    fakePrinterState = loadJsonObject(FAKE_PRINTER_STATE_PATH)
+    for printer in fakePrinterState:
+        if(printer in printers):
+            fakePrinterState[printer] = False
+    writeJsonObject(FAKE_PRINTER_STATE_PATH,fakePrinterState)
+
+
 async def run(command, printers, fileName, toolTemperature, bedTemperature):
     print('making request')
-    url = "http://googl.com/"
     tasks = []
+    printerState = loadJsonObject(PRINTER_STATE_PATH)['printers']
+
+    if(command == actions.COMMAND_FINISH):
+        finishPrint(printers)
+        return ['',200]
 
     async with ClientSession() as session:
         apiRoute = ''
-        if(command == COMMAND_LOAD):
+        if(command == actions.COMMAND_LOAD):
             apiRoute = '/api/files/local'
-        elif(command == COMMAND_LOAD_FILE):
+        elif(command == actions.COMMAND_LOAD_FILE):
             apiRoute = '/api/files/local/{0}'.format(fileName)
-        elif(command == COMMAND_PREHEAT):
+        elif(command == actions.COMMAND_PREHEAT):
             apiRoute = '/api/printer/{0}'
+        elif(command == actions.COMMAND_SHUTDOWN):
+            apiRoute = '/api/system/commands/core/shutdown'
         else:
             apiRoute = '/api/job'
         for printer in printers:
-            url = 'http://{address}:{port}{apiRoute}'.format(address=printers[printer]['address'],port=printers[printer]['port'], apiRoute=apiRoute)
-            if(command == COMMAND_LOAD):
-                task = asyncio.ensure_future(sendFile(session, url, printers[printer]['apiKey'], command, fileName))
-                tasks.append(task)
-            elif( command == COMMAND_PREHEAT):
+            if(canPerformCommand(command, printerState[printer]['state'])):
+                url = 'http://{address}:{port}{apiRoute}'.format(address=printers[printer]['address'],
+                                                                 port=printers[printer]['port'], apiRoute=apiRoute)
+                if (command == actions.COMMAND_LOAD):
+                    task = asyncio.ensure_future(sendFile(session, url, printers[printer]['apiKey'], command, fileName))
+                    tasks.append(task)
+                elif (command == actions.COMMAND_PREHEAT):
+                    tasks.append(asyncio.ensure_future(
+                        sendToolCommand(session, url.format('tool'), printers[printer]['apiKey'], toolTemperature)))
 
-                tasks.append(asyncio.ensure_future(sendToolCommand(session, url.format('tool'), printers[printer]['apiKey'], toolTemperature)))
-
-                tasks.append(asyncio.ensure_future(sendBedCommand(session, url.format('bed'), printers[printer]['apiKey'], bedTemperature)))
+                    tasks.append(asyncio.ensure_future(
+                        sendBedCommand(session, url.format('bed'), printers[printer]['apiKey'], bedTemperature)))
+                else:
+                    task = asyncio.ensure_future(sendCommand(session, url, printers[printer]['apiKey'], command))
+                    tasks.append(task)
             else:
-                task = asyncio.ensure_future(sendCommand(session, url, printers[printer]['apiKey'], command))
-                tasks.append(task)
+                tasks.append(asyncio.ensure_future(invalidAction()))
 
         responses = await asyncio.gather(*tasks)
         return responses

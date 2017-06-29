@@ -15,6 +15,15 @@ def loadConfig(file_name):
 def loadJsonObject(file_name):
     return json.loads(loadFromFile(file_name))
 
+def writeFile(file_name, content):
+    path = '/'.join(os.path.dirname(__file__).split('/')[0:-1])
+    with open((os.path.join(path,file_name)), 'w') as file:
+        file.write(content)
+        file.close()
+
+def writeJsonObject(file_name, object):
+    writeFile(file_name, json.dumps(object))
+
 def removeUnnecessaryData(config):
     for printer in config['printers']:
         config['printers'][printer] = {

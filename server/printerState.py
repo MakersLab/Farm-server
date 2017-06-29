@@ -3,16 +3,20 @@ from aiohttp import ClientSession
 import json
 import yaml
 import time
-from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary
+from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary, loadJsonObject
+from lib.actionPermission import isFinished
 import os
 
 CONFIG = loadConfig('config/config.yml')
+FAKE_PRINTER_STATE_PATH = 'data/fake-state.json'
 
 JOB_INFO = 'JOB_INFO'
 PRINTER_INFO = 'PRINTER_INFO'
 
 UNREACHABLE = 'UNREACHABLE'
 OFFLINE = 'OFFLINE'
+
+previousPrinterState = False
 
 async def fetch(url, session,apiKey,printer,dataType):
     headers = {
@@ -27,6 +31,7 @@ async def fetch(url, session,apiKey,printer,dataType):
 
 
 async def run():
+    global previousPrinterState
     urlJobs = "http://{address}:{port}/api/job"
     urlPrinter = "http://{address}:{port}/api/printer"
     tasks = []
@@ -46,6 +51,13 @@ async def run():
         responses = await asyncio.gather(*tasks)
 
         data = {}
+        fakePrinterState = {}
+        if(os.path.isfile(FAKE_PRINTER_STATE_PATH)):
+            fakePrinterState = loadJsonObject(FAKE_PRINTER_STATE_PATH)
+            # print(fakePrinterState)
+        else:
+            for key in config['printers']:
+                fakePrinterState[key] = False
 
         for key in config['printers']:
             response_data_printer = {}
@@ -65,7 +77,7 @@ async def run():
                         response_data_job = OFFLINE
             if(response_data_printer != OFFLINE and response_data_printer != UNREACHABLE):
                 data[key] = {
-                    'state':response_data_printer['state']['text'],
+                    'state':'Finished' if fakePrinterState[key] == 'Finished' else response_data_printer['state']['text'],
                     'progress': response_data_job['progress']['completion'],
                     'nozzleTemperature': response_data_printer['temperature']['tool0']['actual'],
                     'bedTemperature': response_data_printer['temperature']['bed']['actual'],
@@ -73,6 +85,12 @@ async def run():
                     'timePrinting': response_data_job['progress']['printTime'],
                     'timeRemaining': response_data_job['progress']['printTimeLeft'],
                 }
+
+                if(previousPrinterState):
+                    if(isFinished(previousPrinterState[key], data[key])):
+                        fakePrinterState[key] = 'Finished'
+                        data[key]['state'] = 'Finished'
+
             elif(response_data_printer == OFFLINE):
                 data[key] = getOfflinePrinterDictionary()
             elif(response_data_printer == UNREACHABLE):
@@ -85,6 +103,9 @@ async def run():
         path = os.path.dirname(__file__)
         with open(os.path.join(path, 'data/printer-state.json'),'w') as file:
             file.write(data_json)
+        with open(os.path.join(path,FAKE_PRINTER_STATE_PATH), 'w') as file:
+            file.write(json.dumps(fakePrinterState))
+        previousPrinterState = data
 
 def getData(loop):
     future = asyncio.ensure_future(run())
@@ -119,6 +140,7 @@ def main():
         except Exception as e:
             print(e)
             time.sleep(2)
+            raise Exception('')
 
 if __name__ == '__main__':
     main()
