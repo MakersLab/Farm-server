@@ -5,15 +5,8 @@ import inspect
 from lib.utils import loadConfig, translatePrinterNamesToPrinterObjects, loadFromFile
 from lib.requests import makeRequest
 import json
+import actions
 
-COMMAND_PRINT = 'COMMAND_PRINT'
-COMMAND_PAUSE = 'COMMAND_PAUSE'
-COMMAND_RESUME = 'COMMAND_RESUME'
-COMMAND_LOAD = 'COMMAND_LOAD'
-COMMAND_CANCEL = 'COMMAND_CANCEL'
-COMMAND_LOAD_FILE = 'COMMAND_LOAD_FILE'
-COMMAND_PREHEAT = 'COMMAND_PREHEAT'
-COMMAND_SHUTDOWN = 'COMMAND_SHUTDOWN'
 
 PRINTERS_CONFIG_PATH = 'config/printers.yml'
 SHUTDOWN_SCRIPT_PATH = 'shutdown.sh'
@@ -26,47 +19,47 @@ def add_blueprint(app=None):
 
     @api.route('/pause', methods=['POST'])
     def pause():
-        makeRequest(COMMAND_PAUSE,translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
+        response = makeRequest(actions.COMMAND_PAUSE,translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
-        return 'pause'
+        return json.dumps(response)
 
     @api.route('/resume', methods=['POST'])
     def resume():
         print(getSelectedPrinters())
-        makeRequest(COMMAND_RESUME,
+        response = makeRequest(actions.COMMAND_RESUME,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
-        return 'resume'
+        return json.dumps(response)
 
     @api.route('/print', methods=['POST'])
     def printer():
-        makeRequest(COMMAND_PRINT,
+        response = makeRequest(actions.COMMAND_PRINT,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
-        return 'print'
+        return json.dumps(response)
 
     @api.route('/load', methods=['POST'])
     def load():
         file = request.files['file']
         filename = secure_filename(file.filename)
         file.save(os.path.join('data','file.gco'))
-        makeRequest(COMMAND_LOAD,
+        response = makeRequest(actions.COMMAND_LOAD,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename)
-        return 'upload'
+        return json.dumps(response)
 
     @api.route('/load/<string:fileName>', methods=['POST'])
     def loadFile(fileName):
-        response = makeRequest(COMMAND_LOAD_FILE,
+        response = makeRequest(actions.COMMAND_LOAD_FILE,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),
                     fileName)
         return json.dumps(response)
 
     @api.route('/cancel', methods=['POST'])
     def cancel():
-        makeRequest(COMMAND_CANCEL,
+        response = makeRequest(actions.COMMAND_CANCEL,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
-        return 'cancel'
+        return json.dumps(response)
 
     @api.route('/preheat', methods=['POST'])
     def preheat():
@@ -74,7 +67,7 @@ def add_blueprint(app=None):
         print(request.form['bed'])
         print(request.form['selectedPrinters'])
 
-        response = makeRequest(COMMAND_PREHEAT,
+        response = makeRequest(actions.COMMAND_PREHEAT,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),toolTemperature=request.form['tool'], bedTemperature=request.form['bed'])
         return json.dumps(response)
 
@@ -86,7 +79,7 @@ def add_blueprint(app=None):
         elif(target == 'printers'):
             printers = getSelectedPrinters()
 
-        response = makeRequest(COMMAND_SHUTDOWN,
+        response = makeRequest(actions.COMMAND_SHUTDOWN,
                     translatePrinterNamesToPrinterObjects(printers, loadConfig(PRINTERS_CONFIG_PATH)))
 
         if(target == 'farm'):
@@ -94,6 +87,13 @@ def add_blueprint(app=None):
             shutdownCommand = shutdownCommand.splitlines()
             for command in shutdownCommand:
                 os.system(command)
+
+        return json.dumps(response)
+
+    @api.route('/finish', methods=['POST'])
+    def finish():
+        response = makeRequest(actions.COMMAND_FINISH,
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
         return json.dumps(response)
 
