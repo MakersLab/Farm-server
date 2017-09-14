@@ -1,7 +1,12 @@
+#!/usr/bin/env python3.6
+
+'''
+Fetches data from individual printers and saves it into file
+'''
+
 import asyncio
 from aiohttp import ClientSession
 import json
-import yaml
 import time
 from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary, loadJsonObject
 from lib.actionPermission import isFinished
@@ -31,6 +36,7 @@ async def fetch(url, session,apiKey,printer,dataType):
 
 
 async def run():
+    #TODO review and break into smaller parts for better readability
     global previousPrinterState
     urlJobs = "http://{address}:{port}/api/job"
     urlPrinter = "http://{address}:{port}/api/printer"

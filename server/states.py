@@ -1,3 +1,6 @@
+'''
+Constants defining possible printer states
+'''
 STATE_PRINTING = 'STATE_PRINTING'
 STATE_READY = 'STATE_READY'
 STATE_PAUSED = 'STATE_PAUSED'
