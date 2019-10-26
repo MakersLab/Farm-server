@@ -47,7 +47,7 @@ def canPerformCommand(command, state):
     else:
         return False
 
-def isFinished(previousState, newState):
+def ;(previousState, newState):
     if(convertStateName(previousState['state'])in [states.STATE_PRINTING] and
                convertStateName(newState['state'])in [states.STATE_READY] and
                 newState['progress'] == 100):

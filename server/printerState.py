@@ -60,6 +60,9 @@ async def run():
         fakePrinterState = {}
         if(os.path.isfile(FAKE_PRINTER_STATE_PATH)):
             fakePrinterState = loadJsonObject(FAKE_PRINTER_STATE_PATH)
+            for key in config['printers']:
+                if key not in fakePrinterState:
+                    fakePrinterState[key] = False
             # print(fakePrinterState)
         else:
             for key in config['printers']:
@@ -107,9 +110,10 @@ async def run():
             'printers': data,
         })
         path = os.path.dirname(__file__)
-        with open(os.path.join(path, 'data/printer-state.json'),'w') as file:
+
+        with open(os.path.join(path, 'data/printer-state.json'),'w+') as file:
             file.write(data_json)
-        with open(os.path.join(path,FAKE_PRINTER_STATE_PATH), 'w') as file:
+        with open(os.path.join(path,FAKE_PRINTER_STATE_PATH), 'w+') as file:
             file.write(json.dumps(fakePrinterState))
         previousPrinterState = data
 
