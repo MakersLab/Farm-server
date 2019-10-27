@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3.7
 '''
 API and static files server
 Serves static files (js,html,images)
