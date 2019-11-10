@@ -43,6 +43,9 @@ def canPerformCommand(command, state):
 
     elif(command == actions.COMMAND_FINISH):
         return state in [states.STATE_FINISHED]
+    
+    elif(command == actions.COMMAND_REMOVE_ALL_FILES):
+        return True
 
     else:
         return False

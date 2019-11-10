@@ -6,6 +6,7 @@ from lib.utils import loadConfig, translatePrinterNamesToPrinterObjects, loadFro
 from lib.requests import makeRequest
 import json
 import actions
+import tempfile
 
 
 PRINTERS_CONFIG_PATH = 'config/printers.yml'
@@ -25,7 +26,6 @@ def add_blueprint(app=None):
 
     @api.route('/resume', methods=['POST'])
     def resume():
-        print(getSelectedPrinters())
         response = makeRequest(actions.COMMAND_RESUME,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
 
@@ -42,9 +42,13 @@ def add_blueprint(app=None):
     def load():
         file = request.files['file']
         filename = secure_filename(file.filename)
-        file.save(os.path.join('data','file.gco'))
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        tf.close()
+        file.save(tf.name)
+
         response = makeRequest(actions.COMMAND_LOAD,
-                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename)
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),filename,tempFileName=tf.name)
+        os.remove(tf.name)
         return json.dumps(response)
 
     @api.route('/load/<string:fileName>', methods=['POST'])
@@ -58,14 +62,12 @@ def add_blueprint(app=None):
     def cancel():
         response = makeRequest(actions.COMMAND_CANCEL,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
-
+        makeRequest(actions.COMMAND_REMOVE_ALL_FILES,
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
         return json.dumps(response)
 
     @api.route('/preheat', methods=['POST'])
     def preheat():
-        print(request.form['tool'])
-        print(request.form['bed'])
-        print(request.form['selectedPrinters'])
 
         response = makeRequest(actions.COMMAND_PREHEAT,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)),toolTemperature=request.form['tool'], bedTemperature=request.form['bed'])
@@ -94,7 +96,15 @@ def add_blueprint(app=None):
     def finish():
         response = makeRequest(actions.COMMAND_FINISH,
                     translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
-
+        makeRequest(actions.COMMAND_REMOVE_ALL_FILES,
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
         return json.dumps(response)
+
+    @api.route('/delete-old', methods=['POST'])
+    def deleteOld():
+        response = makeRequest(actions.COMMAND_REMOVE_ALL_FILES,
+                    translatePrinterNamesToPrinterObjects(getSelectedPrinters(), loadConfig(PRINTERS_CONFIG_PATH)))
+        return "ok boomer"
+    
 
     app.register_blueprint(api)
