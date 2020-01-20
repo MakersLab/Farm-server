@@ -1,3 +1,13 @@
+#!/usr/bin/env python3.7
+'''
+API and static files server
+Serves static files (js,html,images)
+
+It is interface between the client website and individual printers.
+
+Todo:
+    better separation of concerns, now it is mix of everything.
+'''
 from flask import Flask, send_from_directory
 from lib.utils import loadConfig, removeUnnecessaryData
 import json

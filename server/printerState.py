@@ -1,7 +1,12 @@
+#!/usr/bin/env python3.7
+
+'''
+Fetches data from individual printers and saves it into file
+'''
+
 import asyncio
 from aiohttp import ClientSession
 import json
-import yaml
 import time
 from lib.utils import loadFromFile, loadConfig, getOfflinePrinterDictionary, getUnreachablePrinterDictionary, loadJsonObject
 from lib.actionPermission import isFinished
@@ -31,6 +36,7 @@ async def fetch(url, session,apiKey,printer,dataType):
 
 
 async def run():
+    #TODO review and break into smaller parts for better readability
     global previousPrinterState
     urlJobs = "http://{address}:{port}/api/job"
     urlPrinter = "http://{address}:{port}/api/printer"
@@ -54,6 +60,9 @@ async def run():
         fakePrinterState = {}
         if(os.path.isfile(FAKE_PRINTER_STATE_PATH)):
             fakePrinterState = loadJsonObject(FAKE_PRINTER_STATE_PATH)
+            for key in config['printers']:
+                if key not in fakePrinterState:
+                    fakePrinterState[key] = False
             # print(fakePrinterState)
         else:
             for key in config['printers']:
@@ -101,9 +110,10 @@ async def run():
             'printers': data,
         })
         path = os.path.dirname(__file__)
-        with open(os.path.join(path, 'data/printer-state.json'),'w') as file:
+
+        with open(os.path.join(path, 'data/printer-state.json'),'w+') as file:
             file.write(data_json)
-        with open(os.path.join(path,FAKE_PRINTER_STATE_PATH), 'w') as file:
+        with open(os.path.join(path,FAKE_PRINTER_STATE_PATH), 'w+') as file:
             file.write(json.dumps(fakePrinterState))
         previousPrinterState = data
 

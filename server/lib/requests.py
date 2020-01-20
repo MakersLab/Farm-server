@@ -1,5 +1,5 @@
 import asyncio
-from aiohttp import ClientSession, FormData, MultipartWriter
+from aiohttp import ClientSession, FormData, MultipartWriter,client_exceptions
 import json
 import uuid
 import actions
@@ -8,6 +8,7 @@ from lib.actionPermission import canPerformCommand
 
 PRINTER_STATE_PATH = 'data/printer-state.json'
 FAKE_PRINTER_STATE_PATH = 'data/fake-state.json'
+
 
 def addUniqueIdToFile(filename):
     splitFilename = filename.split('.')
@@ -31,6 +32,10 @@ def getRequestBody(action):
     elif (action == actions.COMMAND_LOAD_FILE):
         body['command'] = 'select'
         body['print'] = True
+    elif (action == actions.COMMAND_GET_ALL_FILES):
+        body['recursive'] = False
+    elif (action == actions.COMMAND_REMOVE_ALL_FILES):
+        pass
     return body
 
 async def sendCommand(session, url, apiKey, action):
@@ -43,7 +48,7 @@ async def sendCommand(session, url, apiKey, action):
         return responseText, response.status
 
 
-async def sendFile(session, url, apiKey, action, fileName):
+async def sendFile(session, url, apiKey, action, fileName,tempFilePath):
     headers = {
         'X-Api-Key': apiKey
     }
@@ -52,7 +57,7 @@ async def sendFile(session, url, apiKey, action, fileName):
     data = {}
     if(action == actions.COMMAND_LOAD):
         data = FormData()
-        data.add_field('file', open('data/file.gco','rb'), filename=filenameWithId, content_type='application/octet-stream')
+        data.add_field('file', open(tempFilePath,'rb'), filename=filenameWithId, content_type='application/octet-stream')
 
     async with session.post(url,headers=headers, data=data) as response:
         await response.text()
@@ -95,8 +100,42 @@ def finishPrint(printers):
             fakePrinterState[printer] = False
     writeJsonObject(FAKE_PRINTER_STATE_PATH,fakePrinterState)
 
+async def deleteAllFiles(session,url,apiKey):
+    headers = {
+        'X-Api-Key': apiKey
+    }
+    body = getRequestBody(actions.COMMAND_GET_ALL_FILES)
+    getUrl = url.format('')
+    print("deleting")
+    print('url',getUrl)
 
-async def run(command, printers, fileName, toolTemperature, bedTemperature):
+    failed = False
+    async with session.get(url,headers=headers,json=body) as response:
+        data = await response.text()
+        data = json.loads(data)
+        for file in data['files']:
+            print(file['name'])
+            newUrl='{0}/{1}'.format(url,file['name'])
+            print(newUrl)
+            print('closed',session.closed)
+            response = 0
+            try:
+                async with session.delete(newUrl,headers=headers) as responseDelete:
+                    response = responseDelete.status
+            except client_exceptions.ServerDisconnectedError:
+                async with session.delete(newUrl,headers=headers) as responseDelete:
+                    response = responseDelete.status
+            if(response != 204):
+                failed = True
+    if (failed):
+        return 'Some deletes were unsuccesfull',409
+    else:
+        return 'Ok',200
+
+
+
+
+async def run(command, printers, fileName, toolTemperature, bedTemperature,tempFileName=None):
     print('making request')
     tasks = []
     printerState = loadJsonObject(PRINTER_STATE_PATH)['printers']
@@ -115,6 +154,8 @@ async def run(command, printers, fileName, toolTemperature, bedTemperature):
             apiRoute = '/api/printer/{0}'
         elif(command == actions.COMMAND_SHUTDOWN):
             apiRoute = '/api/system/commands/core/shutdown'
+        elif(command == actions.COMMAND_REMOVE_ALL_FILES):
+            apiRoute = '/api/files/local'
         else:
             apiRoute = '/api/job'
         for printer in printers:
@@ -122,7 +163,7 @@ async def run(command, printers, fileName, toolTemperature, bedTemperature):
                 url = 'http://{address}:{port}{apiRoute}'.format(address=printers[printer]['address'],
                                                                  port=printers[printer]['port'], apiRoute=apiRoute)
                 if (command == actions.COMMAND_LOAD):
-                    task = asyncio.ensure_future(sendFile(session, url, printers[printer]['apiKey'], command, fileName))
+                    task = asyncio.ensure_future(sendFile(session, url, printers[printer]['apiKey'], command, fileName,tempFileName))
                     tasks.append(task)
                 elif (command == actions.COMMAND_PREHEAT):
                     tasks.append(asyncio.ensure_future(
@@ -130,6 +171,10 @@ async def run(command, printers, fileName, toolTemperature, bedTemperature):
 
                     tasks.append(asyncio.ensure_future(
                         sendBedCommand(session, url.format('bed'), printers[printer]['apiKey'], bedTemperature)))
+                elif (command == actions.COMMAND_REMOVE_ALL_FILES):
+                    tasks.append(asyncio.ensure_future(
+                        deleteAllFiles(session,url,printers[printer]['apiKey'])
+                    ))
                 else:
                     task = asyncio.ensure_future(sendCommand(session, url, printers[printer]['apiKey'], command))
                     tasks.append(task)
@@ -137,12 +182,13 @@ async def run(command, printers, fileName, toolTemperature, bedTemperature):
                 tasks.append(asyncio.ensure_future(invalidAction()))
 
         responses = await asyncio.gather(*tasks)
+        print(responses)
         return responses
 
-def makeRequest(command, printers, fileName=None, toolTemperature=None, bedTemperature=None):
+def makeRequest(command, printers, fileName=None, toolTemperature=None, bedTemperature=None,tempFileName=None):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    future = asyncio.ensure_future(run(command, printers, fileName, toolTemperature=toolTemperature, bedTemperature=bedTemperature))
+    future = asyncio.ensure_future(run(command, printers, fileName, toolTemperature=toolTemperature, bedTemperature=bedTemperature,tempFileName=tempFileName))
     return (loop.run_until_complete(future))
 
 
