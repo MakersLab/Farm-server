@@ -6,7 +6,7 @@ import zipfile
 import shutil
 import os
 
-RELEASES_URL = 'https://api.github.com/repos/MakersLab/farm-client/releases/latest'
+RELEASES_URL = 'https://api.github.com/repos/MakersLab/farm-client/releases'
 DOWNLOAD_FOLDER = './client-build'
 DESTINATION_FOLDER = './server/static/'
 
@@ -20,7 +20,9 @@ def main():
     response = requests.get(RELEASES_URL)
     if(response.ok):
         release = json.loads(response.text)
-        print('Found latest release with version {0}'.format(release['tag_name']))
+        # print(release)
+        print('Found latest release with version {0}'.format(release[0]['tag_name']))
+        release = release[0]
         if(len(release['assets']) > 0):
             downloadableAssetIndex = -1
             for index,asset in enumerate(release['assets']):
