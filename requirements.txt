@@ -7,7 +7,7 @@ Flask==0.12.1
 Flask-Cors==3.0.2
 future==0.16.0
 itsdangerous==0.24
-Jinja2==2.9.6
+Jinja2==2.11.3
 MarkupSafe==1.0
 multidict==2.1.4
 progressbar2==3.30.2
